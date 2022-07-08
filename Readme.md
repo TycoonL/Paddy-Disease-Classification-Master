@@ -25,5 +25,86 @@
 
 **test_images** - 此目录包含 3,469 个测试集图像。
 
+## 三、项目文件结构
+
+```
+Paddy-Disease-Classification-Master/
+│
+├── train.py - main script to start training
+├── test.py - evaluation of trained model
+│
+├── model.py
+│  
+└── Paddy Doctor Dataset/ - dateset
+    ├── test_images
+    └── train_images
+```
+
+## 四、数据集加载
+
+![img](https://img-blog.csdnimg.cn/20200414110352377.png?)
+
+[pytorch](https://so.csdn.net/so/search?q=pytorch&spm=1001.2101.3001.7020)加载图片数据集有两种方法，根据数据集结构选择了ImageFolder 方法。
+
+1. ImageFolder 适合于分类[数据集](https://so.csdn.net/so/search?q=数据集&spm=1001.2101.3001.7020)，并且每一个类别的图片在同一个文件夹, ImageFolder加载的数据集， 训练数据为文件件下的图片， 训练标签是对应的文件夹， 每个文件夹为一个类别
+2. 根据pytorch提供的Dataset类创建自己的数据集加载类。
+
+```
+
+```
+
+## 五、模型
+
+模型A: Conv（in：3，out：8，3×3）→ MaxPool（2×2）→ Conv（in：8，out：16，3×3）→ MaxPool（2×2）→ FC
+
+模型B：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→ Conv（in：8，out：4，3×3）→ MaxPool（2×2）→ FC
+
+模型C：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：4，3×3）→ FC
+
+模型D：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：8，3×3）→ FC
+
+## 六、实验结果
+
+64：
+
+![image-20220707221933455](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707221933455.png)
+
+64 normalize：
+
+![image-20220707224401101](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707224401101.png)
+
+128：
+
+![image-20220707234901429](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707234901429.png)
+
+320：
+
+![image-20220708003106270](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708003106270.png)
 
 
+
+B_128_:
+
+![image-20220708125727929](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708125727929.png)
+
+B_128_con5:
+
+![image-20220708133622176](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708133622176.png)
+
+C：
+
+![image-20220708140927290](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708140927290.png)
+
+D：
+
+![image-20220708164307070](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708164307070.png)
+
+D 640:
+
+![image-20220708181123542](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708181123542.png)
+
+## 后记
+
+- ```
+  用nn.CrossEntropyLoss()作为损失函数，label不需要onehot，不需要softmax层！
+  ```
