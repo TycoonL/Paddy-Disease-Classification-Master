@@ -86,13 +86,13 @@ Paddy-Disease-Classification-Master/
 
 resnet34_分辨率224×224 _20epochs：
 
-![image-20220709225040077](.\img\image-20220709225040077.png)
+![](./img/image-20220709225040077.png)
 
 缩小学习率，继续训练：
 
-![image-20220710080745020](.\img\image-20220710080745020.png)
+![](./img/image-20220710080745020.png)
 
-![image-20220710114536369](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220710114536369.png)
+<img src="./img/image-20220710114536369.png"  />
 
 ## 后记
 
