@@ -16,14 +16,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 input_size = 784
 in_channel = 3
 num_classes = 10
-learning_rate = 0.001
+learning_rate = 0.0001
 batch_size = 16
-num_epochs = 20
+num_epochs = 15
 h=224
 
 model_path =None
 # 读取数据集
-
 transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
@@ -48,28 +47,28 @@ target_transform = Lambda(lambda y: torch.zeros(10, dtype=torch.float).scatter_(
 
 path = r'.\Paddy Doctor Dataset\train_images'
 data = datasets.ImageFolder(path,transform)
+print(data.class_to_idx,data.classes)
+
 n = len(data)  # total number of examples
-n_test = random.sample(range(1, n), int(0.1 * n))  # take ~10% for test
+n_test = random.sample(range(1, n), int(0.01 * n))  # take ~10% for test
 test_set = torch.utils.data.Subset(data, n_test)  # take 10%
 train_set = torch.utils.data.Subset(data,list(set(range(1, n)).difference(set(n_test))))  # take the rest
 
 data_train = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 data_test=DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
-# for batch_idex, (data, targets) in enumerate(data_test):
-#     print(batch_idex,targets)
 
 # # 实例化模型
 # model = CNN(H=h,in_channels=in_channel,num_classes=num_classes)
 # if model_path:
 #     model.load_state_dict(torch.load(model_path))
 # model.to(device)
-model = models.resnet34(pretrained=False)
+model = models.resnet32(pretrained=False)
 model.fc = nn.Sequential(
     nn.Dropout(0.1),
     nn.Linear(model.fc.in_features, 10)
 )
-model_path='resnet34_20.pth'
+model_path='resnet32_model.pth'
 if model_path:
      model.load_state_dict(torch.load(model_path))
 model = model.to(device)
@@ -79,7 +78,7 @@ criterion = nn.CrossEntropyLoss()  #label不需要onehot，不需要softmax层
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 model.train()
-# 下面部分是训练，有时可以单独拿出来写函数
+# 下面部分是训练
 for epoch in range(num_epochs):
     for batch_idex, (data, targets) in enumerate(data_train):
         # 如果模型在 GPU 上，数据也要读入 GPU

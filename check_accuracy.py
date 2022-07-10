@@ -2,6 +2,7 @@ import torch
 
 # 测试能否使用 GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # 评估准确度的函数
 def check_accuracy(loader, model):
     # if loader.dataset.train:
