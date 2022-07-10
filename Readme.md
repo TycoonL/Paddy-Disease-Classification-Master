@@ -31,11 +31,14 @@
 Paddy-Disease-Classification-Master/
 │
 ├── train.py - main script to start training
-├── test.py - evaluation of trained model
+├── check_accuracy.py - evaluation of model
+├── submit.py - predict test images
 │
 ├── model.py
 │  
 └── Paddy Doctor Dataset/ - dateset
+	├── sample_submission.csv
+	├── train.csv
     ├── test_images
     └── train_images
 ```
@@ -59,52 +62,42 @@ Paddy-Disease-Classification-Master/
 
 模型B：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→ Conv（in：8，out：4，3×3）→ MaxPool（2×2）→ FC
 
-模型C：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：4，3×3）→ FC
+模型C：Conv（in：3，out：8，5×5）→ MaxPool（2×2）→ Conv（in：8，out：4，3×3）→ MaxPool（2×2）→ FC
 
-模型D：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：8，3×3）→ FC
+模型D：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：4，3×3）→ FC
+
+模型E：Conv（in：3，out：8，3×3）→ MaxPool（2×2）→Conv（in：8，out：6，3×3）→ MaxPool（2×2）→  Conv（in：6，out：8，3×3）→ FC
 
 ## 六、实验结果
 
-64：
+| 模型 | input           | train loss | train acc | test acc |
+| ---- | --------------- | ---------- | --------- | -------- |
+| A    | 64×48           | 0.39       | 87.4      | 69.52    |
+| A    | 64×48 normalize | 0.31       | 94.44     | 67.98    |
+| A    | 128×96          | 0.025      | 99.38     | 69.90    |
+| A    | 320×240         | 0.000110   | 100.0     | 64.23    |
+| B    | 128×96          | 0.38       | 94.10     | 59.62    |
+| C    | 128×96          | 0.33       | 94.05     | 58.17    |
+| D    | 128×96          | 0.48       | 91.34     | 58.08    |
+| E    | 128×96          | 0.048      | 98.37     | 67.60    |
+| E    | 640×320         | 0.000023   | 100       | 52.60    |
 
-![image-20220707221933455](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707221933455.png)
+结果分析：当分辨率大的时候参数多造成过拟合，另外再加上深度浅，使得感受野太小，无法很好地提取特征。所以后续采用了resnet进一步实验，在测评网站上达到了97%的准确率。
 
-64 normalize：
+resnet34_分辨率224×224 _20epochs：
 
-![image-20220707224401101](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707224401101.png)
+![image-20220709225040077](.\img\image-20220709225040077.png)
 
-128：
+缩小学习率，继续训练：
 
-![image-20220707234901429](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220707234901429.png)
+![image-20220710080745020](.\img\image-20220710080745020.png)
 
-320：
-
-![image-20220708003106270](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708003106270.png)
-
-
-
-B_128_:
-
-![image-20220708125727929](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708125727929.png)
-
-B_128_con5:
-
-![image-20220708133622176](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708133622176.png)
-
-C：
-
-![image-20220708140927290](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708140927290.png)
-
-D：
-
-![image-20220708164307070](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708164307070.png)
-
-D 640:
-
-![image-20220708181123542](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220708181123542.png)
+![image-20220710114536369](C:\Users\Tycoon\AppData\Roaming\Typora\typora-user-images\image-20220710114536369.png)
 
 ## 后记
 
 - ```
   用nn.CrossEntropyLoss()作为损失函数，label不需要onehot，不需要softmax层！
   ```
+
+- 项目地址：https://github.com/TycoonL/Paddy-Disease-Classification-Master.git
