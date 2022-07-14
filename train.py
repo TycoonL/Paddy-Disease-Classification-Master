@@ -1,8 +1,14 @@
 import random
+from os import walk
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+import pandas as pd
+from PIL import Image
+
 from model import CNN
 from torch.utils.data import DataLoader
 from torchvision import transforms, datasets,models
@@ -13,15 +19,13 @@ from check_accuracy import check_accuracy
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # 超参数设定
-input_size = 784
-in_channel = 3
 num_classes = 10
 learning_rate = 0.0001
 batch_size = 16
 num_epochs = 15
 h=224
 
-model_path =None
+model_name='resnet34'
 # 读取数据集
 transform = transforms.Compose([
     transforms.RandomHorizontalFlip(),
@@ -30,7 +34,6 @@ transform = transforms.Compose([
         transforms.Pad(padding=10),
         transforms.CenterCrop(480),
         transforms.RandomRotation(20),
-        transforms.CenterCrop((576, 432)),
         transforms.ColorJitter(
             brightness=0.1,
             contrast=0.1,
@@ -57,25 +60,29 @@ train_set = torch.utils.data.Subset(data,list(set(range(1, n)).difference(set(n_
 data_train = DataLoader(train_set, batch_size=batch_size, shuffle=True)
 data_test=DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
-
 # # 实例化模型
 # model = CNN(H=h,in_channels=in_channel,num_classes=num_classes)
 # if model_path:
 #     model.load_state_dict(torch.load(model_path))
 # model.to(device)
-model = models.resnet32(pretrained=False)
+model = models.resnet34(pretrained=False)
 model.fc = nn.Sequential(
     nn.Dropout(0.1),
     nn.Linear(model.fc.in_features, 10)
 )
-model_path='resnet32_model.pth'
-if model_path:
-     model.load_state_dict(torch.load(model_path))
+for (dirpath, _ , filenames) in walk('./weight/'):
+    for filename in filenames:
+        print(filename)
+        if filename == model_name+'_model.pth':
+            model.load_state_dict(torch.load(dirpath+filename))
 model = model.to(device)
 
 # 设定损失函数和优化器
 criterion = nn.CrossEntropyLoss()  #label不需要onehot，不需要softmax层
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+#动态学习率
+scheduler = ReduceLROnPlateau(optimizer, mode='max',verbose=1,patience=3)
+
 
 model.train()
 # 下面部分是训练
@@ -94,10 +101,42 @@ for epoch in range(num_epochs):
         optimizer.step()
         if batch_idex % 20 == 0:
             print('Train Epoch: {} {} Loss: {:.6f}'.format(epoch,batch_idex,loss.item()))
-    check_accuracy(data_test, model)
-model_pth = 'resnet32_model.pth'
+    val_acc=check_accuracy(data_test, model)
+    scheduler.step(val_acc)
+model_pth = './weight/'+model_name+'_model.pth'
 torch.save(model.state_dict(), model_pth)
-
 
 check_accuracy(data_train, model)
 check_accuracy(data_test, model)
+
+submission_dir = r'./Paddy Doctor Dataset/test_images/'
+dataset_file = './Paddy Doctor Dataset/train.csv'
+submission_sample = './Paddy Doctor Dataset/sample_submission.csv'
+submission_output = './Paddy Doctor Dataset/submission_'+model_name+'.csv'
+
+df = pd.read_csv(dataset_file)
+
+test_transform = transforms.Compose([
+    transforms.Resize((224,224)),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
+
+
+idx_to_label= ['bacterial_leaf_blight', 'bacterial_leaf_streak', 'bacterial_panicle_blight', 'blast', 'brown_spot', 'dead_heart', 'downy_mildew', 'hispa', 'normal', 'tungro']
+model.eval()
+image_ids, labels = [], []
+for (dirpath, dirname, filenames) in walk(submission_dir):
+    for filename in filenames:
+        image = Image.open(dirpath+filename)
+        image = test_transform(image)
+        image = image.unsqueeze(0).to(device)
+        image_ids.append(filename)
+        labels.append(idx_to_label[model(image).argmax().item()])
+
+submission = pd.DataFrame({
+    'image_id': image_ids,
+    'label': labels,
+})
+submission['label'].value_counts()
+submission.to_csv(submission_output, index=False, header=True)
