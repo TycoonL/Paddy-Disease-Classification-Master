@@ -15,6 +15,7 @@ from torchvision import transforms, datasets,models
 from torchvision.transforms import Lambda
 from check_accuracy import check_accuracy
 
+
 # 测试能否使用 GPU
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -27,29 +28,37 @@ h=224
 
 model_name='resnet34'
 # 读取数据集
-transform = transforms.Compose([
-    transforms.RandomHorizontalFlip(),
-    transforms.RandomVerticalFlip(),
-    transforms.RandomChoice([
-        transforms.Pad(padding=10),
-        transforms.CenterCrop(480),
-        transforms.RandomRotation(20),
-        transforms.ColorJitter(
-            brightness=0.1,
-            contrast=0.1,
-            saturation=0.1,
-            hue=0.1
-        )
+transform = {
+    'train':transforms.Compose([
+        transforms.RandomHorizontalFlip(),
+        transforms.RandomVerticalFlip(),
+        transforms.RandomChoice([
+            transforms.Pad(padding=10),
+            transforms.CenterCrop(480),
+            transforms.RandomRotation(20),
+            transforms.ColorJitter(
+                brightness=0.1,
+                contrast=0.1,
+                saturation=0.1,
+                hue=0.1
+            )
+        ]),
+        transforms.Resize((h, h)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
-    transforms.Resize((h, h)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    'val':transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 ])
+
+}
 #onehot 转换
 target_transform = Lambda(lambda y: torch.zeros(10, dtype=torch.float).scatter_(dim=0, index=torch.tensor(y), value=1))
 
 path = r'.\Paddy Doctor Dataset\train_images'
-data = datasets.ImageFolder(path,transform)
+data = datasets.ImageFolder(path,transform['train'])
 print(data.class_to_idx,data.classes)
 
 n = len(data)  # total number of examples
@@ -77,9 +86,12 @@ for (dirpath, _ , filenames) in walk('./weight/'):
             model.load_state_dict(torch.load(dirpath+filename))
 model = model.to(device)
 
+
+
 # 设定损失函数和优化器
 criterion = nn.CrossEntropyLoss()  #label不需要onehot，不需要softmax层
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+#optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+optimizer= optim.ASGD(model.parameters(),lr=learning_rate)
 #动态学习率
 scheduler = ReduceLROnPlateau(optimizer, mode='max',verbose=1,patience=3)
 
@@ -116,12 +128,6 @@ submission_output = './Paddy Doctor Dataset/submission_'+model_name+'.csv'
 
 df = pd.read_csv(dataset_file)
 
-test_transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
-
 
 idx_to_label= ['bacterial_leaf_blight', 'bacterial_leaf_streak', 'bacterial_panicle_blight', 'blast', 'brown_spot', 'dead_heart', 'downy_mildew', 'hispa', 'normal', 'tungro']
 model.eval()
@@ -129,7 +135,7 @@ image_ids, labels = [], []
 for (dirpath, dirname, filenames) in walk(submission_dir):
     for filename in filenames:
         image = Image.open(dirpath+filename)
-        image = test_transform(image)
+        image = transform['val'](image)
         image = image.unsqueeze(0).to(device)
         image_ids.append(filename)
         labels.append(idx_to_label[model(image).argmax().item()])
