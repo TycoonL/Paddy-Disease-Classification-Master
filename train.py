@@ -132,13 +132,14 @@ df = pd.read_csv(dataset_file)
 idx_to_label= ['bacterial_leaf_blight', 'bacterial_leaf_streak', 'bacterial_panicle_blight', 'blast', 'brown_spot', 'dead_heart', 'downy_mildew', 'hispa', 'normal', 'tungro']
 model.eval()
 image_ids, labels = [], []
-for (dirpath, dirname, filenames) in walk(submission_dir):
-    for filename in filenames:
-        image = Image.open(dirpath+filename)
-        image = transform['val'](image)
-        image = image.unsqueeze(0).to(device)
-        image_ids.append(filename)
-        labels.append(idx_to_label[model(image).argmax().item()])
+with torch.no_grad():
+    for (dirpath, dirname, filenames) in walk(submission_dir):
+        for filename in filenames:
+            image = Image.open(dirpath+filename)
+            image = transform['val'](image)
+            image = image.unsqueeze(0).to(device)
+            image_ids.append(filename)
+            labels.append(idx_to_label[model(image).argmax().item()])
 
 submission = pd.DataFrame({
     'image_id': image_ids,
